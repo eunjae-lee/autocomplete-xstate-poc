@@ -99,7 +99,9 @@ export default () => {
       }),
       updateHighlightedIndex: assign({
         highlightedIndex: ({ hits, highlightedIndex }, { type }) => {
-          if (type === "HIGHLIGHT_NEXT") {
+          if (highlightedIndex === null) {
+            return 0;
+          } else if (type === "HIGHLIGHT_NEXT") {
             return highlightedIndex + 1 < hits.length
               ? highlightedIndex + 1
               : 0;
