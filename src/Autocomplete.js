@@ -56,7 +56,8 @@ const autocompleteMachine = Machine({
           entry: ["resetHighlightedIndex"],
           on: {
             HIGHLIGHT_NEXT: { target: "highlighted", cond: "hasHits" },
-            HIGHLIGHT_PREV: { target: "highlighted", cond: "hasHits" }
+            HIGHLIGHT_PREV: { target: "highlighted", cond: "hasHits" },
+            HIGHLIGHT_SPECIFIC_INDEX: "highlighted"
           }
         },
         highlighted: {
@@ -64,6 +65,7 @@ const autocompleteMachine = Machine({
           on: {
             HIGHLIGHT_NEXT: "highlighted",
             HIGHLIGHT_PREV: "highlighted",
+            HIGHLIGHT_SPECIFIC_INDEX: "highlighted",
             RESET_HIGHLIGHT: "none"
           }
         }
@@ -107,7 +109,13 @@ export default () => {
         highlightedIndex: null
       }),
       updateHighlightedIndex: assign({
-        highlightedIndex: ({ hits, highlightedIndex }, { type }) => {
+        highlightedIndex: (
+          { hits, highlightedIndex },
+          { type, data: { specificIndex } = {} }
+        ) => {
+          if (specificIndex !== undefined) {
+            return specificIndex;
+          }
           if (highlightedIndex === null) {
             return 0;
           } else if (type === "HIGHLIGHT_NEXT") {
@@ -174,6 +182,13 @@ export default () => {
     }
   };
 
+  const onMouseOverWith = specificIndex => () => {
+    if (state.context.highlightedIndex === specificIndex) {
+      return;
+    }
+    send({ type: "HIGHLIGHT_SPECIFIC_INDEX", data: { specificIndex } });
+  };
+
   return (
     <div>
       <input
@@ -190,6 +205,7 @@ export default () => {
             return (
               <li
                 key={index}
+                onMouseOver={onMouseOverWith(index)}
                 className={
                   index === state.context.highlightedIndex ? "highlighted" : ""
                 }
