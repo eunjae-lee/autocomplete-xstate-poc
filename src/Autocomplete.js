@@ -61,7 +61,7 @@ export default () => {
       }),
       openDropdownIfHitsExist: ({ hits }) => {
         if ((hits || []).length > 0) {
-          sendToDropdown({ type: "OPEN" });
+          sendToDropdown("OPEN");
         }
       }
     }
@@ -75,12 +75,12 @@ export default () => {
 
   const onFocus = () => {
     if ((searchState.context.hits || []).length > 0) {
-      sendToDropdown({ type: "OPEN" });
+      sendToDropdown("OPEN");
     }
   };
 
   const onBlur = () => {
-    sendToDropdown({ type: "CLOSE" });
+    sendToDropdown("CLOSE");
   };
 
   return (
