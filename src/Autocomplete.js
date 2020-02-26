@@ -8,6 +8,7 @@ const autocompleteMachine = Machine({
   id: "autocomplete",
   type: "parallel",
   context: {
+    query: null,
     hits: [],
     highlightedIndex: null
   },
@@ -16,11 +17,11 @@ const autocompleteMachine = Machine({
       initial: "initial",
       states: {
         initial: {
-          entry: ["resetHits"],
+          entry: ["resetSearch"],
           on: { INPUT: "searching" }
         },
         searching: {
-          entry: ["search"],
+          entry: ["setQuery", "search"],
           on: {
             FETCHED: "success",
             INPUT: "searching",
@@ -78,8 +79,12 @@ const KEY_ARROW_DOWN = 40;
 export default () => {
   const [state, send] = useMachine(autocompleteMachine, {
     actions: {
-      resetHits: assign({
-        hits: []
+      resetSearch: assign({
+        hits: [],
+        query: null
+      }),
+      setQuery: assign({
+        query: (_, { data: { query } }) => query
       }),
       search: (_, { data: { query } }) => {
         getSources()[0]
@@ -177,6 +182,7 @@ export default () => {
         onFocus={onFocus}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
+        value={state.context.query || ""}
       />
       {state.value.dropdown === "opened" && (
         <ul className="dropdown">
