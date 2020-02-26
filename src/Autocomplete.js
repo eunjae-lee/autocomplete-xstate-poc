@@ -16,7 +16,7 @@ const autocompleteMachine = Machine({
       initial: "idle",
       states: {
         idle: {
-          entry: ["reset"],
+          entry: ["resetHits"],
           on: { INPUT: "searching" }
         },
         searching: {
@@ -74,7 +74,7 @@ const KEY_ARROW_DOWN = 40;
 export default () => {
   const [state, send] = useMachine(autocompleteMachine, {
     actions: {
-      reset: assign({
+      resetHits: assign({
         hits: []
       }),
       search: (_, { data: { query } }) => {
@@ -143,16 +143,18 @@ export default () => {
     send("CLOSE");
   };
 
+  const openIfHitsExistsAndClosed = () => {
+    if (state.value.dropdown === "closed" && state.context.hits.length > 0) {
+      send("OPEN");
+    }
+  };
+
   const onKeyDown = event => {
     if (event.keyCode === KEY_ARROW_DOWN) {
-      if (state.value.dropdown === "closed" && state.context.hits.length > 0) {
-        send("OPEN");
-      }
+      openIfHitsExistsAndClosed();
       send("HIGHLIGHT_NEXT");
     } else if (event.keyCode === KEY_ARROW_UP) {
-      if (state.value.dropdown === "closed" && state.context.hits.length > 0) {
-        send("OPEN");
-      }
+      openIfHitsExistsAndClosed();
       send("HIGHLIGHT_PREV");
     } else if (event.keyCode === KEY_ESC) {
       send("CLOSE");
