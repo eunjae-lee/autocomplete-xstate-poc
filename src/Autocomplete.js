@@ -4,35 +4,33 @@ import { Machine, assign } from "xstate";
 import { getSources } from "./algolia";
 import "./Autocomplete.css";
 
-const searchMachine = Machine({
-  id: "search",
-  initial: "idle",
+const autocompleteMachine = Machine({
+  id: "autocomplete",
+  type: "parallel",
   context: {
     hits: []
   },
   states: {
-    idle: {
-      on: { INPUT: "searching" }
-    },
-    searching: {
-      entry: ["search"],
-      on: {
-        FETCHED: "success",
-        INPUT: "searching"
+    searchBox: {
+      initial: "idle",
+      states: {
+        idle: {
+          on: { INPUT: "searching" }
+        },
+        searching: {
+          entry: ["search"],
+          on: {
+            FETCHED: "success",
+            INPUT: "searching"
+          }
+        },
+        success: {
+          entry: ["setHits", "openOrCloseDropdown"],
+          on: { INPUT: "searching" }
+        }
       }
     },
-    success: {
-      entry: ["setHits", "openDropdownIfHitsExist"],
-      on: { INPUT: "searching" }
-    }
-  }
-});
-
-const dropdownMachine = Machine({
-  id: "dropdown",
-  type: "parallel",
-  states: {
-    openAndClose: {
+    dropdown: {
       initial: "closed",
       states: {
         closed: {
@@ -47,40 +45,41 @@ const dropdownMachine = Machine({
 });
 
 export default () => {
-  const [searchState, sendToSearch] = useMachine(searchMachine, {
+  const [state, send] = useMachine(autocompleteMachine, {
     actions: {
       search: (_, { data: { query } }) => {
         getSources()[0]
           .getSuggestions({ query })
           .then(hits => {
-            sendToSearch({ type: "FETCHED", data: { hits } });
+            send({ type: "FETCHED", data: { hits } });
           });
       },
       setHits: assign({
         hits: (_, { data }) => data.hits
       }),
-      openDropdownIfHitsExist: ({ hits }) => {
+      openOrCloseDropdown: ({ hits }) => {
         if ((hits || []).length > 0) {
-          sendToDropdown("OPEN");
+          send("OPEN");
+        } else {
+          send("CLOSE");
         }
       }
     }
   });
-  const [dropdownState, sendToDropdown] = useMachine(dropdownMachine);
 
   const onInput = event => {
     const query = event.currentTarget.value;
-    sendToSearch({ type: "INPUT", data: { query } });
+    send({ type: "INPUT", data: { query } });
   };
 
   const onFocus = () => {
-    if ((searchState.context.hits || []).length > 0) {
-      sendToDropdown("OPEN");
+    if ((state.context.hits || []).length > 0) {
+      send("OPEN");
     }
   };
 
   const onBlur = () => {
-    sendToDropdown("CLOSE");
+    send("CLOSE");
   };
 
   return (
@@ -91,9 +90,9 @@ export default () => {
         onFocus={onFocus}
         onBlur={onBlur}
       />
-      {dropdownState.value.openAndClose === "opened" && (
+      {state.value.dropdown === "opened" && (
         <ul className="dropdown">
-          {(searchState.context.hits || []).map((hit, index) => {
+          {(state.context.hits || []).map((hit, index) => {
             return (
               <div key={index}>
                 <p>{hit.name}</p>
@@ -102,7 +101,7 @@ export default () => {
           })}
         </ul>
       )}
-      <pre>{JSON.stringify(dropdownState, null, 2)}</pre>
+      <pre>{JSON.stringify(state, null, 2)}</pre>
     </div>
   );
 };
