@@ -13,9 +13,9 @@ const autocompleteMachine = Machine({
   },
   states: {
     searchBox: {
-      initial: "idle",
+      initial: "initial",
       states: {
-        idle: {
+        initial: {
           entry: ["resetHits"],
           on: { INPUT: "searching" }
         },
@@ -24,12 +24,12 @@ const autocompleteMachine = Machine({
           on: {
             FETCHED: "success",
             INPUT: "searching",
-            RESET_SEARCH: "idle"
+            RESET_SEARCH: "initial"
           }
         },
         success: {
           entry: ["setHits", "openOrCloseDropdown"],
-          on: { INPUT: "searching", RESET_SEARCH: "idle" }
+          on: { INPUT: "searching", RESET_SEARCH: "initial" }
         }
       }
     },
