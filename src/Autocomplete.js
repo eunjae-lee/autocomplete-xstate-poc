@@ -30,13 +30,18 @@ const searchMachine = Machine({
 
 const dropdownMachine = Machine({
   id: "dropdown",
-  initial: "closed",
+  type: "parallel",
   states: {
-    closed: {
-      on: { TOGGLE: "opened", OPEN: "opened" }
-    },
-    opened: {
-      on: { TOGGLE: "closed", CLOSE: "closed" }
+    openAndClose: {
+      initial: "closed",
+      states: {
+        closed: {
+          on: { OPEN: "opened" }
+        },
+        opened: {
+          on: { CLOSE: "closed" }
+        }
+      }
     }
   }
 });
@@ -86,7 +91,7 @@ export default () => {
         onFocus={onFocus}
         onBlur={onBlur}
       />
-      {dropdownState.value === "opened" && (
+      {dropdownState.value.openAndClose === "opened" && (
         <ul className="dropdown">
           {(searchState.context.hits || []).map((hit, index) => {
             return (
@@ -97,7 +102,7 @@ export default () => {
           })}
         </ul>
       )}
-      {/* <pre>{JSON.stringify(highlightState, null, 2)}</pre> */}
+      <pre>{JSON.stringify(dropdownState, null, 2)}</pre>
     </div>
   );
 };
