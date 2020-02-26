@@ -37,10 +37,14 @@ const autocompleteMachine = Machine({
       initial: "closed",
       states: {
         closed: {
-          on: { OPEN: "opened" }
+          on: { OPEN: "opened", ESCAPE: "reset" }
         },
         opened: {
-          on: { CLOSE: "closed" }
+          on: { CLOSE: "closed", ESCAPE: "closed" }
+        },
+        reset: {
+          entry: ["resetEverything"],
+          on: { "": "closed" }
         }
       }
     },
@@ -113,7 +117,11 @@ export default () => {
             return null;
           }
         }
-      })
+      }),
+      resetEverything: () => {
+        send("RESET_SEARCH");
+        send("RESET_HIGHLIGHT");
+      }
     },
     guards: {
       hasHits: ({ hits }) => {
@@ -157,7 +165,7 @@ export default () => {
       openIfHitsExistsAndClosed();
       send("HIGHLIGHT_PREV");
     } else if (event.keyCode === KEY_ESC) {
-      send("CLOSE");
+      send("ESCAPE");
     }
   };
 
@@ -186,7 +194,7 @@ export default () => {
           })}
         </ul>
       )}
-      {/* <pre>{JSON.stringify(state, null, 2)}</pre> */}
+      <pre>{JSON.stringify(state, null, 2)}</pre>
     </div>
   );
 };
